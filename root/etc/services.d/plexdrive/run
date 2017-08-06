@@ -1,0 +1,9 @@
+#!/usr/bin/with-contenv sh
+
+umask 022
+
+mount_command="plexdrive mount -c /config/  --uid=$PUID --gid=$PGID -o allow-other $PLEXDRIVE_MOUNT_OPTIONS /data"
+
+echo "Executing => $mount_command"
+exec \
+	s6-setuidgid abc $mount_command
