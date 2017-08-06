@@ -36,7 +36,8 @@ RUN \
  cd tmp && \
  wget https://github.com/dweidenfeld/plexdrive/releases/download/${PLEXDRIVE_VERSION}/plexdrive-linux-${PLATFORM_ARCH} && \
  mv plexdrive-linux-${PLATFORM_ARCH} /usr/bin/plexdrive && \
-
+ chmod a+x /usr/bin/plexdrive && \
+ 
  apk add --no-cache --repository http://nl.alpinelinux.org/alpine/edge/community \
 	shadow && \
 
