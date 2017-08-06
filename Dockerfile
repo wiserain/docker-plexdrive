@@ -91,7 +91,7 @@ RUN \
  tar xfz \
 	/tmp/s6-overlay.tar.gz -C / && \
 
- cd tmp && \
+ cd /tmp && \
  wget https://github.com/dweidenfeld/plexdrive/releases/download/${PLEXDRIVE_VERSION}/plexdrive-linux-${PLATFORM_ARCH} && \
  mv plexdrive-linux-${PLATFORM_ARCH} /usr/bin/plexdrive && \
  chmod a+x /usr/bin/plexdrive && \
