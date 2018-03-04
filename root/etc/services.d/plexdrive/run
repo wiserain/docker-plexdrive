@@ -1,8 +1,10 @@
-#!/usr/bin/with-contenv sh
+#!/usr/bin/with-contenv bash
 
 umask 022
 
-mount_command="plexdrive mount -c /config/ --uid=$PUID --gid=$PGID -o allow_other /data"
+IFS=" " read -r -a RUN_ARRAY <<< "$RUN_OPTS"
+
+mount_command="plexdrive mount -c /config/ --cache-file=/config/cache.bolt --uid=$PUID --gid=$PGID -o allow_other /data ${RUN_ARRAY[@]}"
 
 echo "Executing => $mount_command"
 exec \
