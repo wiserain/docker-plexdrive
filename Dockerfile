@@ -53,6 +53,6 @@ RUN \
 # add local files
 COPY root/ /
 
-VOLUME ["/config"]
+VOLUME /config /data
 
 ENTRYPOINT ["/init"]
