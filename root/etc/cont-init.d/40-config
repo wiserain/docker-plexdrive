@@ -1,12 +1,11 @@
-#!/usr/bin/with-contenv sh
+#!/usr/bin/with-contenv bash
+
+# make folders
+mkdir -p /config
 
 # create empty config file
 touch /config/token.json
 touch /config/config.json
 
-# permissions
-chown abc:abc \
-	/config/token.json
-
-chown abc:abc \
-	/config/config.json
+# permissions
+chown -R abc:abc /config
