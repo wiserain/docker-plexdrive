@@ -1,5 +1,11 @@
 #!/usr/bin/with-contenv bash
 
+while [ ! -f "/config/config.json" ] || [ ! -f "/config/token.json" ]
+do
+	echo "Waiting for plexdrive configuration files ..."
+	sleep 30
+done
+
 umask 022
 
 IFS=" " read -r -a RUN_ARRAY <<< "$RUN_OPTS"

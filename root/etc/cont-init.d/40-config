@@ -3,9 +3,5 @@
 # make folders
 mkdir -p /config
 
-# create empty config file
-touch /config/token.json
-touch /config/config.json
-
 # permissions
 chown -R abc:abc /config

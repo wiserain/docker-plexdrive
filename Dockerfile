@@ -43,6 +43,7 @@ RUN \
  usermod -G users abc && \
  echo "**** create some files / folders ****" && \
  mkdir -p /config /data && \
+ chmod a+x /usr/bin/* && \
  echo "**** cleanup ****" && \
  apt-get purge -y \
  	curl \
