@@ -18,7 +18,8 @@ RUN \
  apt-get update && \
  apt-get install -y \
  	ca-certificates \
- 	fuse && \
+ 	fuse \
+ 	unionfs-fuse && \
  update-ca-certificates && \
  apt-get install -y openssl && \
  sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf && \
@@ -50,6 +51,6 @@ RUN \
  apt-get autoremove -y && \
  rm -rf /tmp/* /var/lib/{apt,dpkg,cache,log}/
 
-VOLUME /config /data
+VOLUME /config /data /ufs
 
 ENTRYPOINT ["/init"]

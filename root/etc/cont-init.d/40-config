@@ -1,7 +1,7 @@
 #!/usr/bin/with-contenv bash
 
 # make folders
-mkdir -p /config
+mkdir -p /config /plexdrive
 
 # permissions
-chown -R abc:abc /config
+chown -R abc:abc /config /plexdrive
