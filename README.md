@@ -35,4 +35,4 @@ First, up and run your container as above. It will be waiting for two plexdrive 
 docker-compose exec <service_name> plexdrive_setup
 ```
 
-Once you finish typing your API token, shell will answer. No worries, it is expected. Simply escape by ```Ctrl+C```, and go to ```/config```. You will find two json files generated. Container running in background proceeds to execute mounting command for plexdrive. You can now access google drive contents via volume-mapped ```/your/mounting/point```.
+Once you finish typing your API token, shell stops responding. No worries, it is expected. Simply escape by ```Ctrl+C```, and go to ```/config```. You will find two json files generated. Container running in background proceeds to execute mounting command for plexdrive. You can now access google drive contents via volume-mapped ```/your/mounting/point```.
