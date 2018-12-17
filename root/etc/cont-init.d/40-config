@@ -1,8 +1,8 @@
 #!/usr/bin/with-contenv bash
 
 # make folders
-mkdir -p /config /plexdrive
+mkdir -p /config /data /chunks /mongo/{db,logs} /plexdrive
 
 # permissions
-chown -R abc:abc /config /plexdrive
+chown -R abc:abc /config /data /chunks /mongo /plexdrive
 chmod a+x /usr/bin/{plexdrive_setup,ufs}

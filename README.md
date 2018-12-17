@@ -2,7 +2,8 @@
 
 Docker image for running [plexdrive](https://github.com/dweidenfeld/plexdrive)
 - Ubuntu 18.04
-- Plexdrive 5.0.0
+- Plexdrive 4.0.0
+- MongoDB 4.0
 
 
 ## Usage
@@ -13,12 +14,14 @@ version: '3'
 services:
   plexdrive:
     container_name: plexdrive
-    image: wiserain/plexdrive:5.0.0-unionfs
+    image: wiserain/plexdrive:4.0.0
     restart: always
     network_mode: "bridge"
     volumes:
       - ${DOCKER_ROOT}/plexdrive/config:/config
-      - /your/mounting/point:/data:shared
+      - ${DOCKER_ROOT}/plexdrive/mongo:/mongo
+      - /mnt/plexdrive/chunks:/chunks
+      - /mnt/plexdrive/data:/data:shared
       - /additional/dir/for/unionfs:/ufs
     privileged: true
     devices:
@@ -39,7 +42,7 @@ First, up and run your container as above. It will be waiting for two plexdrive 
 docker-compose exec <service_name> plexdrive_setup
 ```
 
-Once you finish typing your API token, shell stops responding. No worries, it is expected. Simply escape by ```Ctrl+C```, and go to ```/config```. You will find two json files generated. Container running in background proceeds to execute mounting command for plexdrive. You can now access google drive contents via volume-mapped ```/your/mounting/point```.
+Once you finish typing your API token, shell stops responding. No worries, it is expected. Simply escape by ```Ctrl+C```, and go to ```/config```. You will find two json files generated. Container running in background proceeds to execute mounting command for plexdrive. You can now access google drive contents via volume-mapped ```/mnt/plexdrive/data```.
 
 ### Unionfs
 Along with plexdrive folder, you can specify one local directory to be unionfs with. Internally, it will have following command
