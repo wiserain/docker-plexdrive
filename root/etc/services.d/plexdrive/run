@@ -9,7 +9,7 @@ umask 022
 
 IFS=" " read -r -a RUN_ARRAY <<< "$RUN_OPTS"
 
-mount_command="plexdrive mount -c /config/ --cache-file=/config/cache.bolt --uid=$PUID --gid=$PGID -o allow_other /plexdrive ${RUN_ARRAY[@]}"
+mount_command="plexdrive mount -c /config/ --cache-file=/config/cache.bolt --uid=${PUID:-911} --gid=${PGID:-911} -o allow_other /plexdrive ${RUN_ARRAY[@]}"
 
 echo "Executing => $mount_command"
 exec \
