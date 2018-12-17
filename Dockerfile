@@ -34,7 +34,6 @@ RUN \
  wget https://github.com/dweidenfeld/plexdrive/releases/download/${PLEXDRIVE_VERSION}/plexdrive-linux-${PLATFORM_ARCH} && \
  mv plexdrive-linux-${PLATFORM_ARCH} /usr/bin/plexdrive && \
  chmod 777 /usr/bin/plexdrive && \
- chmod a+x /usr/bin/* && \
  echo "**** create abc user ****" && \
  groupmod -g 1000 users && \
  useradd -u 911 -U -d /config -s /bin/false abc && \
