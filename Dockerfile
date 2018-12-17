@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:18.04
 MAINTAINER wiserain
 
 # global environment settings
@@ -8,9 +8,6 @@ ENV PLATFORM_ARCH="amd64"
 # s6 environment settings
 ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=2
 ENV S6_KEEP_ENV=1
-
-# add local files
-COPY root/ /
 
 # install packages
 RUN \
@@ -50,6 +47,9 @@ RUN \
  apt-get clean autoclean && \
  apt-get autoremove -y && \
  rm -rf /tmp/* /var/lib/{apt,dpkg,cache,log}/
+
+# add local files
+COPY root/ /
 
 VOLUME /config /data /ufs
 

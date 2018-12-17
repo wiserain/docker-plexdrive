@@ -1,6 +1,8 @@
 # docker-plexdrive
 
 Docker image for running [plexdrive](https://github.com/dweidenfeld/plexdrive)
+- Ubuntu 18.04
+- Plexdrive 5.0.0
 
 
 ## Usage
@@ -11,7 +13,7 @@ version: '3'
 services:
   plexdrive:
     container_name: plexdrive
-    image: wiserain/plexdrive:unionfs
+    image: wiserain/plexdrive:5.0.0-unionfs
     restart: always
     network_mode: "bridge"
     volumes:
