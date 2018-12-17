@@ -5,3 +5,4 @@ mkdir -p /config
 
 # permissions
 chown -R abc:abc /config
+chmod a+x /usr/bin/plexdrive_setup
