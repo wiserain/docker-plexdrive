@@ -7,5 +7,5 @@ else
   echo "Setup Plexdrive"
   printf "==============================================================\n\n\n"
 
-  plexdrive mount -c /config/ --cache-file=/config/cache.bolt --uid=$PUID --gid=$PGID /data
+  plexdrive mount -c /config/ --cache-file=/config/cache.bolt --uid=${PUID:-911} --gid=${PGID:-911} /data
 fi
