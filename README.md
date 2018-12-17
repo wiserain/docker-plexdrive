@@ -14,7 +14,7 @@ version: '3'
 services:
   plexdrive:
     container_name: plexdrive
-    image: wiserain/plexdrive:4.0.0
+    image: wiserain/plexdrive:4.0.0-unionfs
     restart: always
     network_mode: "bridge"
     volumes:
