@@ -2,7 +2,7 @@
 
 umask 022
 
-mongodb_command="mongod --dbpath=/mongo/db --logpath=/mongo/logs/mongod.log"
+mongodb_command="mongod --dbpath=/mongo/db --logpath=/mongo/logs/mongod.log --logappend --logRotate=reopen --bind_ip=127.0.0.1"
 
 echo "Executing => $mongodb_command"
 exec \
