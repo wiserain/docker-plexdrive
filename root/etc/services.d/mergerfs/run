@@ -1,0 +1,24 @@
+#!/usr/bin/with-contenv bash
+
+sleep 5
+
+while [ -z "$(findmnt /plexdrive | grep fuse)" ]; do 
+    echo "Waiting for plexdrive mounted at /plexdrive. Retrying in 30s ..."
+    sleep 30
+done
+
+# Mount if not already mounted
+if [ $(findmnt /data | grep fuse.mergerfs | wc -l) == "0" ]; then
+    cloud_dir="/plexdrive"
+	if [ ! -z ${PLEXDRIVE_SUB_PATH} ]; then
+		cloud_dir="${cloud_dir}$(echo "${PLEXDRIVE_SUB_PATH}" | tr -d '"' | tr -d "'")"
+	fi
+
+    mfs_basic_opts="-o uid=${PUID:-911},gid=${PGID:-911},umask=022,allow_other"
+    IFS=" " read -r -a mfs_user_opts <<< "$MFS_USER_OPTS"
+    mfs_branches="/local=RW:${cloud_dir}=NC"
+
+    mount_command="mergerfs ${mfs_basic_opts} -o ${mfs_user_opts} ${mfs_branches} /data"
+    echo "executing => $mount_command"
+    exec $mount_command
+fi

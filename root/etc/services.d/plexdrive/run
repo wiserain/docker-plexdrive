@@ -1,16 +1,17 @@
 #!/usr/bin/with-contenv bash
 
-while [ ! -f "/config/config.json" ] || [ ! -f "/config/token.json" ]; do
-	echo "Waiting for plexdrive configuration files ..."
-	sleep 30
-done
-
-umask 022
+plexdrive_basic_opts="
+-c /config/
+--cache-file=/config/cache.bolt
+--uid=${PUID:-911}
+--gid=${PGID:-911}
+--umask=022
+-o allow_other
+"
 
 IFS=" " read -r -a RUN_ARRAY <<< "$RUN_OPTS"
 
-mount_command="plexdrive mount -c /config/ --cache-file=/config/cache.bolt --uid=${PUID:-911} --gid=${PGID:-911} -o allow_other /plexdrive ${RUN_ARRAY[@]}"
+mount_command="plexdrive mount $(echo $plexdrive_basic_opts) /plexdrive ${RUN_ARRAY[@]}"
 
 echo "Executing => $mount_command"
-exec \
-	s6-setuidgid abc $mount_command
+exec s6-setuidgid abc $mount_command

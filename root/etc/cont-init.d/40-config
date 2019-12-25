@@ -1,8 +1,28 @@
 #!/usr/bin/with-contenv bash
 
 # make folders
-mkdir -p /config /plexdrive
+mkdir -p /config /data /plexdrive /local
 
 # permissions
-chown -R abc:abc /config /plexdrive
-chmod a+x /usr/bin/{plexdrive_setup,ufs}
+chmod a+x /usr/bin/plexdrive_setup
+
+echo "*** checking plexdrive mountpoint"
+if [ $(findmnt /plexdrive | grep fuse | wc -l) != "0" ]; then
+	echo "ERROR: plexdrive mountpoint (/plexdrive) already mounted"
+	exit 1
+fi
+
+echo "*** checking local mountpoint"
+if ! mountpoint -q /local; then
+	echo "ERROR: local mountpoint (/local) already mounted"
+	exit 1
+fi
+
+echo "*** checking plexdrive config/token"
+while [ ! -f "/config/config.json" ] || [ ! -f "/config/token.json" ]; do
+	echo "Waiting for plexdrive configuration files. Retrying in 30s ..."
+	sleep 30
+done
+
+# permissions
+chown -R abc:abc /config /data /plexdrive

@@ -1,5 +1,5 @@
 FROM ubuntu:18.04
-MAINTAINER wiserain
+LABEL maintainer "wiserain" 
 
 # global environment settings
 ENV PLEXDRIVE_VERSION="5.0.0"
@@ -9,6 +9,9 @@ ENV PLATFORM_ARCH="amd64"
 ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=2
 ENV S6_KEEP_ENV=1
 
+ENV LANG=C.UTF-8
+ENV MFS_USER_OPTS "rw,async_read=false,use_ino,allow_other,func.getattr=newest,category.action=all,category.create=ff,cache.files=partial,dropcacheonclose=true"
+
 # install packages
 RUN \
  echo "**** install runtime packages ****" && \
@@ -16,7 +19,7 @@ RUN \
  apt-get install -y \
  	ca-certificates \
  	fuse \
- 	unionfs-fuse && \
+ 	tzdata && \
  update-ca-certificates && \
  apt-get install -y openssl && \
  sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf && \
@@ -34,6 +37,10 @@ RUN \
  wget https://github.com/dweidenfeld/plexdrive/releases/download/${PLEXDRIVE_VERSION}/plexdrive-linux-${PLATFORM_ARCH} && \
  mv plexdrive-linux-${PLATFORM_ARCH} /usr/bin/plexdrive && \
  chmod 777 /usr/bin/plexdrive && \
+ echo "**** add mergerfs ****" && \
+ MFS_VERSION=$(curl -sX GET "https://api.github.com/repos/trapexit/mergerfs/releases/latest" | awk '/tag_name/{print $4;exit}' FS='[""]') && \
+ cd $(mktemp -d) && wget "https://github.com/trapexit/mergerfs/releases/download/${MFS_VERSION}/mergerfs_${MFS_VERSION}.ubuntu-bionic_amd64.deb" && \
+ dpkg -i mergerfs_${MFS_VERSION}.ubuntu-bionic_amd64.deb && \
  echo "**** create abc user ****" && \
  groupmod -g 1000 users && \
  useradd -u 911 -U -d /config -s /bin/false abc && \
@@ -50,6 +57,7 @@ RUN \
 # add local files
 COPY root/ /
 
-VOLUME /config /data /ufs
+VOLUME /config /data /plexdrive /local
+WORKDIR /data
 
 ENTRYPOINT ["/init"]

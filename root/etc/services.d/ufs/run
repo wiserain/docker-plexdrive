@@ -1,7 +1,0 @@
-#!/usr/bin/with-contenv bash
-
-umask 022
-
-mount_command="ufs"
-
-exec $mount_command
