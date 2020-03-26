@@ -1,21 +1,31 @@
 FROM ubuntu:18.04
-MAINTAINER wiserain
+LABEL maintainer="wiserain"
 
-# global environment settings
-ENV PLEXDRIVE_VERSION="5.0.0"
-ENV PLATFORM_ARCH="amd64"
+ARG DEBIAN_FRONTEND="noninteractive"
+ARG APT_MIRROR="archive.ubuntu.com"
 
-# s6 environment settings
+ARG PLEXDRIVE_VERSION="5.1.0"
+ARG PLATFORM_ARCH="amd64"
+
+# environment settings - s6
 ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=2
 ENV S6_KEEP_ENV=1
 
+# environment settings - container-level
+ENV LANG=C.UTF-8
+ENV PS1="\u@\h:\w\\$ "
+
 # install packages
 RUN \
+ echo "**** apt source change for local build ****" && \
+ sed -i "s/archive.ubuntu.com/\"$APT_MIRROR\"/g" /etc/apt/sources.list && \
  echo "**** install runtime packages ****" && \
  apt-get update && \
  apt-get install -y \
  	ca-certificates \
- 	fuse && \
+	fuse \
+	tzdata \
+ 	unionfs-fuse && \
  update-ca-certificates && \
  apt-get install -y openssl && \
  sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf && \
@@ -29,10 +39,14 @@ RUN \
  curl -o /tmp/s6-overlay.tar.gz -L "https://github.com/just-containers/s6-overlay/releases/download/${OVERLAY_VERSION}/s6-overlay-amd64.tar.gz" && \
  tar xfz  /tmp/s6-overlay.tar.gz -C / && \
  echo "**** add plexdrive ****" && \
- cd /tmp && \
+ cd $(mktemp -d) && \
  wget https://github.com/dweidenfeld/plexdrive/releases/download/${PLEXDRIVE_VERSION}/plexdrive-linux-${PLATFORM_ARCH} && \
  mv plexdrive-linux-${PLATFORM_ARCH} /usr/bin/plexdrive && \
  chmod 777 /usr/bin/plexdrive && \
+ echo "**** add mergerfs ****" && \
+ MFS_VERSION=$(curl -sX GET "https://api.github.com/repos/trapexit/mergerfs/releases/latest" | awk '/tag_name/{print $4;exit}' FS='[""]') && \
+ cd $(mktemp -d) && wget "https://github.com/trapexit/mergerfs/releases/download/${MFS_VERSION}/mergerfs_${MFS_VERSION}.ubuntu-bionic_amd64.deb" && \
+ dpkg -i mergerfs_${MFS_VERSION}.ubuntu-bionic_amd64.deb && \
  echo "**** create abc user ****" && \
  groupmod -g 1000 users && \
  useradd -u 911 -U -d /config -s /bin/false abc && \
@@ -49,6 +63,12 @@ RUN \
 # add local files
 COPY root/ /
 
-VOLUME /config /data
+# environment settings - pooling fs
+ENV POOLING_FS "mergerfs"
+ENV UFS_USER_OPTS "cow,direct_io,nonempty,auto_cache,sync_read"
+ENV MFS_USER_OPTS "rw,async_read=false,use_ino,allow_other,func.getattr=newest,category.action=all,category.create=ff,cache.files=partial,dropcacheonclose=true"
+
+VOLUME /config /cache /log /cloud /data
+WORKDIR /data
 
 ENTRYPOINT ["/init"]

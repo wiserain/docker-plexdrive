@@ -2,3 +2,4 @@
 
 # unmount fuse
 fusermount -uz /data
+fusermount -uz /cloud

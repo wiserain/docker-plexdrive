@@ -1,0 +1,21 @@
+#!/usr/bin/with-contenv bash
+
+echo "*** checking config"
+while [ ! -f "/config/config.json" ] || [ ! -f "/config/token.json" ]; do
+	echo "Waiting for config files in /config. Retrying in 30s ..."
+	echo "RUN: docker exec -it <CONTAINER_NAME> plexdrive_setup"
+	sleep 30
+done
+
+echo "*** checking mountpoint"
+pd_mountpoint=$(if ! mountpoint -q /local; then echo /data; else echo /cloud; fi)
+while [ $(findmnt ${pd_mountpoint} | grep fuse | wc -l) != "0" ]; do
+	echo "mountpoint (${pd_mountpoint}) already mounted. Retrying in 15s ..."
+	sleep 15
+done
+
+# permissions
+chown -R abc:abc /config /cache /log /cloud /data
+
+# display version
+echo "*** plexdrive $(plexdrive --version) ready!"
