@@ -7,7 +7,7 @@ pd_basic_opts="
 --cache-file=/cache/cache.bolt
 --uid=${PUID:-911}
 --gid=${PGID:-911}
---umask=022
+--umask=0100775
 -o allow_other
 "
 
