@@ -17,10 +17,10 @@ if [ "$(printenv POOLING_FS | tr -d '"' | tr -d "'")" == "unionfs" ] && mountpoi
     # Mount if not already mounted
     if [ $(findmnt /data | grep fuse.unionfs | wc -l) == "0" ]; then
         ufs_basic_opts="-o uid=${PUID:-911},gid=${PGID:-911},umask=022,allow_other"
-        IFS=" " read -r -a ufs_usr_opts <<< "$UFS_USR_OPTS"
+        IFS=" " read -r -a ufs_user_opts <<< "$UFS_USER_OPTS"
         ufs_branches="/local=RW:${cloud_dir}=RO"
 
-        mount_command="unionfs ${ufs_basic_opts} -o ${ufs_usr_opts} ${ufs_branches} /data"
+        mount_command="unionfs ${ufs_basic_opts} -o ${ufs_user_opts} ${ufs_branches} /data"
         echo "executing => $mount_command"
         exec $mount_command
     fi
