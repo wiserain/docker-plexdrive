@@ -5,7 +5,7 @@ ARG DEBIAN_FRONTEND="noninteractive"
 ARG APT_MIRROR="archive.ubuntu.com"
 
 ARG PLEXDRIVE_VERSION="5.1.0"
-ARG PLATFORM_ARCH="amd64"
+ARG TARGETARCH
 
 # environment settings - s6
 ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=2
@@ -36,17 +36,21 @@ RUN \
  	wget && \
  echo "**** add s6 overlay ****" && \
  OVERLAY_VERSION=$(curl -sX GET "https://api.github.com/repos/just-containers/s6-overlay/releases/latest" | awk '/tag_name/{print $4;exit}' FS='[""]') && \
- curl -o /tmp/s6-overlay.tar.gz -L "https://github.com/just-containers/s6-overlay/releases/download/${OVERLAY_VERSION}/s6-overlay-amd64.tar.gz" && \
+ OVERLAY_ARCH=$(if [ "$TARGETARCH" = "arm64" ]; then echo "aarch64"; elif [ "$TARGETARCH" = "arm" ]; then echo "armhf"; else echo "$TARGETARCH"; fi) && \
+ curl -o /tmp/s6-overlay.tar.gz -L "https://github.com/just-containers/s6-overlay/releases/download/${OVERLAY_VERSION}/s6-overlay-${OVERLAY_ARCH}.tar.gz" && \
  tar xfz  /tmp/s6-overlay.tar.gz -C / && \
  echo "**** add plexdrive ****" && \
  cd $(mktemp -d) && \
- wget https://github.com/plexdrive/plexdrive/releases/download/${PLEXDRIVE_VERSION}/plexdrive-linux-${PLATFORM_ARCH} && \
- mv plexdrive-linux-${PLATFORM_ARCH} /usr/bin/plexdrive && \
+ PLEXDRIVE_ARCH=$(if [ "$TARGETARCH" = "arm" ]; then echo "arm7"; else echo "$TARGETARCH"; fi) && \
+ wget https://github.com/plexdrive/plexdrive/releases/download/${PLEXDRIVE_VERSION}/plexdrive-linux-${PLEXDRIVE_ARCH} && \
+ mv plexdrive-linux-${PLEXDRIVE_ARCH} /usr/bin/plexdrive && \
  chmod 777 /usr/bin/plexdrive && \
  echo "**** add mergerfs ****" && \
  MFS_VERSION=$(curl -sX GET "https://api.github.com/repos/trapexit/mergerfs/releases/latest" | awk '/tag_name/{print $4;exit}' FS='[""]') && \
- cd $(mktemp -d) && wget "https://github.com/trapexit/mergerfs/releases/download/${MFS_VERSION}/mergerfs_${MFS_VERSION}.ubuntu-bionic_amd64.deb" && \
- dpkg -i mergerfs_${MFS_VERSION}.ubuntu-bionic_amd64.deb && \
+ MFS_ARCH=$(if [ "$TARGETARCH" = "arm" ]; then echo "armhf"; else echo "$TARGETARCH"; fi) && \
+ MFS_DEB="mergerfs_${MFS_VERSION}.ubuntu-bionic_${MFS_ARCH}.deb" && \
+ cd $(mktemp -d) && wget "https://github.com/trapexit/mergerfs/releases/download/${MFS_VERSION}/${MFS_DEB}" && \
+ dpkg -i ${MFS_DEB} && \
  echo "**** create abc user ****" && \
  groupmod -g 1000 users && \
  useradd -u 911 -U -d /config -s /bin/false abc && \
