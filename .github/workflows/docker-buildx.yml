@@ -1,4 +1,4 @@
-name: docker-buildx-manual
+name: docker-buildx
 
 on:
   watch:
@@ -16,6 +16,7 @@ jobs:
           echo ::set-output name=buildx_platforms::linux/amd64,linux/arm/v7,linux/arm64
           echo ::set-output name=dockerhub_user::wiserain
           echo ::set-output name=dockerhub_repo::plexdrive
+          echo ::set-output name=version::5.1.0
       -
         name: Checkout
         uses: actions/checkout@v2
@@ -38,7 +39,17 @@ jobs:
           docker buildx build \
             --output "type=image,push=true" \
             --platform ${{ steps.vars.outputs.buildx_platforms }} \
-            --tag "${IMAGE_NAME}:5.1.0" \
+            --tag "${IMAGE_NAME}:${{ steps.vars.outputs.version }}" \
             --tag "${IMAGE_NAME}:latest" \
             --file Dockerfile . \
-            --build-arg "PLEXDRIVE_VERSION=5.1.0"
+            --build-arg "PLEXDRIVE_VERSION=${{ steps.vars.outputs.version }}"
+      -
+        name: Send Notification
+        uses: sarisia/actions-status-discord@v1
+        if: always()
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          status: ${{ job.status }}
+          description: |
+            Image: ${{ steps.vars.outputs.dockerhub_user }}/${{ steps.vars.outputs.dockerhub_repo }}
+            Tags: latest, ${{ steps.vars.outputs.version }}
