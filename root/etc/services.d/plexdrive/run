@@ -2,6 +2,10 @@
 
 pd_mountpoint=$(if ! mountpoint -q /local; then echo /data; else echo /cloud; fi)
 
+if [ $(findmnt ${pd_mountpoint} | grep fuse | wc -l) == "1" ]; then
+    fusermount -uz ${pd_mountpoint}
+fi
+
 pd_basic_opts="
 -c /config/
 --cache-file=/cache/cache.bolt
