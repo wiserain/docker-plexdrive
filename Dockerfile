@@ -67,6 +67,8 @@ RUN \
 # add local files
 COPY root/ /
 
+RUN chmod a+x /healthcheck.sh
+
 # environment settings - pooling fs
 ENV POOLING_FS "mergerfs"
 ENV UFS_USER_OPTS "cow,direct_io,nonempty,auto_cache,sync_read"
@@ -74,5 +76,7 @@ ENV MFS_USER_OPTS "rw,async_read=false,use_ino,allow_other,func.getattr=newest,c
 
 VOLUME /config /cache /log /cloud /data
 WORKDIR /data
+
+HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=3 CMD /healthcheck.sh
 
 ENTRYPOINT ["/init"]
