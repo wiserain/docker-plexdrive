@@ -1,7 +1,8 @@
 # docker-plexdrive
 
 Docker image for [plexdrive](https://github.com/dweidenfeld/plexdrive) mount
-- Ubuntu 18.04
+
+- Ubuntu 20.04
 - pooling filesystem (a choice of mergerfs or unionfs)
 
 ## Usage
@@ -75,6 +76,7 @@ mergerfs \
     -o ${MFS_USER_OPTS} \
     /local=RW:/cloud${PLEXDRIVE_PATH}=NC /data
 ```
+
 where a default value of ```MFS_USER_OPTS``` is
 
 ```bash
@@ -89,6 +91,7 @@ unionfs \
     -o ${UFS_USER_OPTS} \
     /local=RW:/cloud${PLEXDRIVE_PATH}=RO /data
 ```
+
 where a default value of ```UFS_USER_OPTS``` is
 
 ```bash
