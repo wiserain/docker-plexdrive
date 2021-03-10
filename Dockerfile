@@ -1,5 +1,6 @@
 FROM ubuntu:20.04
 LABEL maintainer="wiserain"
+LABEL org.opencontainers.image.source https://github.com/wiserain/docker-plexdrive
 
 ARG DEBIAN_FRONTEND="noninteractive"
 ARG APT_MIRROR="archive.ubuntu.com"
