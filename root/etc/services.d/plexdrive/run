@@ -1,22 +1,9 @@
 #!/usr/bin/with-contenv bash
-
-pd_mountpoint=$(if ! mountpoint -q /local; then echo /data; else echo /cloud; fi)
-
-if [ $(findmnt ${pd_mountpoint} | grep fuse | wc -l) == "1" ]; then
-    fusermount -uz ${pd_mountpoint}
-fi
-
-pd_basic_opts="
--c /config/
---cache-file=/cache/cache.bolt
---uid=${PUID:-911}
---gid=${PGID:-911}
---umask=0100775
--o allow_other
-"
+. /usr/local/bin/variables
 
 IFS=" " read -r -a pd_user_opts <<< "$PLEXDRIVE_OPTS"
 
 mount_command="plexdrive mount ${pd_mountpoint} $(echo $pd_basic_opts) ${pd_user_opts[@]}"
-echo "executing => $mount_command"
-exec s6-setuidgid abc $mount_command
+echo "*** mounting => $mount_command"
+s6-notifyoncheck -d -n 0 -s 3000 \
+    s6-setuidgid abc $mount_command

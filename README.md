@@ -1,6 +1,6 @@
 # docker-plexdrive
 
-Docker image for [plexdrive](https://github.com/dweidenfeld/plexdrive) mount
+Docker image for [plexdrive](https://github.com/plexdrive/plexdrive) mount
 
 - Ubuntu 20.04
 - pooling filesystem (a choice of mergerfs or unionfs)
@@ -13,24 +13,42 @@ version: '3'
 services:
   plexdrive:
     container_name: plexdrive
-    image: wiserain/plexdrive:5.1.0
+    image: wiserain/plexdrive:latest
     restart: always
     network_mode: "bridge"
     volumes:
       - ${DOCKER_ROOT}/plexdrive/config:/config
-      - ${DOCKER_ROOT}/plexdrive/cache:/cache
+      - ${DOCKER_ROOT}/plexdrive/cache:/cache   # Optional: prepared for --chunk-file
       - /your/mounting/point:/data:shared
       - /local/dir/to/be/merged/with:/local     # Optional: if you have a folder to be mergerfs/unionfs with
-    privileged: true
     devices:
       - /dev/fuse
     cap_add:
-      - MKNOD
       - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+```
+
+equivalently,
+
+```bash
+docker run -d \
+    --name=plexdrive \
+    --cap-add SYS_ADMIN \
+    --device /dev/fuse \
+    --security-opt apparmor=unconfined \
+    -v ${DOCKER_ROOT}/plexdrive/config:/config \
+    -v ${DOCKER_ROOT}/plexdrive/cache:/cache \
+    -v /your/mounting/point:/data:shared \
+    -v /local/dir/to/be/merged/with:/local \
+    -e PUID=${PUID} \
+    -e PGID=${PGID} \
+    -e TZ=${TZ} \
+    wiserain/plexdrive:latest
 ```
 
 First, up and run your container as above. It will be waiting for two plexdrive configuration files to be ready. You can create those files using built-in script by
@@ -47,16 +65,15 @@ Here is the internal command for plexdrive mount.
 
 ```bash
 plexdrive mount ${plexdrive_mountpoint:-/data} \
-    -c /config/ \
-    --cache-file=/cache/cache.bolt \
+    --config /config/ \
     --uid=${PUID:-911} \
     --gid=${PGID:-911} \
-    --umask=022 \
+    --umask=0100775 \
     -o allow_other \
     ${PLEXDRIVE_OPTS}
 ```
 
-Variables with capital letters are only configurable by the container environment variable.
+Please not that variables with capital letters are only configurable by the container environment variable.
 
 | ENV  | Description  | Default  |
 |---|---|---|
@@ -64,11 +81,11 @@ Variables with capital letters are only configurable by the container environmen
 | ```TZ```  | timezone, required for correct timestamp in log  |   |
 | ```PLEXDRIVE_OPTS```  | additioanl arguments which will be appended to the basic options  |   |
 
-By default, ```plexdrive_mountpoint``` is ```/data``` but fallbacks to ```/cloud``` if your container has bind-mount at ```/local``` so that can be pooled in the following process.
+By default, ```plexdrive_mountpoint``` is ```/data``` but fallbacks to ```/cloud``` if your container has bind-mount at ```/local``` and so that can be pooled in the following process.
 
 ## [mergerfs](https://github.com/trapexit/mergerfs) or unionfs (optional)
 
-Along with the plexdrive folder, you can specify one local directory to be mergerfs with. Internally, it will execute a following command
+Along with the plexdrive folder, you can specify one local directory to be mergerfs with by ```POOLING_FS=mergerfs```. Internally, it will execute a following command
 
 ```bash
 mergerfs \
@@ -80,7 +97,7 @@ mergerfs \
 where a default value of ```MFS_USER_OPTS``` is
 
 ```bash
-MFS_USER_OPTS="rw,async_read=false,use_ino,allow_other,func.getattr=newest,category.action=all,category.create=ff,cache.files=partial,dropcacheonclose=true"
+MFS_USER_OPTS="rw,use_ino,func.getattr=newest,category.action=all,category.create=ff,cache.files=auto-full,dropcacheonclose=true"
 ```
 
 If you want unionfs instead of mergerfs, set ```POOLING_FS=unionfs```, which will apply

@@ -1,4 +1,5 @@
 #!/usr/bin/with-contenv bash
+. /usr/local/bin/variables
 
 echo "*** checking config"
 while [ ! -f "/config/config.json" ] || [ ! -f "/config/token.json" ]; do
@@ -7,15 +8,18 @@ while [ ! -f "/config/config.json" ] || [ ! -f "/config/token.json" ]; do
 	sleep 30
 done
 
-echo "*** checking mountpoint"
-pd_mountpoint=$(if ! mountpoint -q /local; then echo /data; else echo /cloud; fi)
-while [ $(findmnt ${pd_mountpoint} | grep fuse | wc -l) != "0" ]; do
-	echo "mountpoint (${pd_mountpoint}) already mounted. Retrying in 15s ..."
-	sleep 15
+echo "*** checking mountpoint: ${pd_mountpoint}"
+while findmnt "${pd_mountpoint}" | grep -q fuse; do
+	echo "ERROR: mountpoint (${pd_mountpoint}) already mounted"
+    fusermount -uz "${pd_mountpoint}"
+    echo "Retrying in 15s ..."
+    sleep 15
 done
 
-# permissions
-chown -R abc:abc /config /cache /log /cloud /data
+# permissions
+chown -R abc:abc \
+    /config /cloud /data /cache
+chown abc:abc /local
 
 # display version
 echo "*** plexdrive $(plexdrive --version) ready!"

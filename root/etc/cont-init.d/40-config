@@ -1,8 +1,0 @@
-#!/usr/bin/with-contenv bash
-
-# make folders
-mkdir -p /config /cache /log /cloud /data /local
-
-# permissions
-chown -R abc:abc /config /cache /log /cloud /data
-chmod a+x /usr/bin/plexdrive_setup

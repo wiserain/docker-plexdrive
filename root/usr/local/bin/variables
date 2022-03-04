@@ -1,0 +1,20 @@
+#!/usr/bin/with-contenv bash
+
+[[ -n "${POOLING_FS:-}" ]] && pd_mountpoint="/cloud" || pd_mountpoint="/data"
+
+# umaks
+# https://github.com/plexdrive/plexdrive/issues/230
+
+pd_basic_opts="
+--config /config/
+--uid=${PUID:-911}
+--gid=${PGID:-911}
+--umask=0100775
+-o allow_other
+"
+
+mfs_basic_opts="uid=${PUID:-911},gid=${PGID:-911},umask=022,allow_other"
+mfs_branches="/local=RW:/cloud${PLEXDRIVE_PATH:-}=NC"
+
+ufs_basic_opts="uid=${PUID:-911},gid=${PGID:-911},umask=022,allow_other"
+ufs_branches="/local=RW:/cloud${PLEXDRIVE_PATH:-}=RO"
