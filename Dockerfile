@@ -2,10 +2,10 @@ FROM ubuntu:20.04 AS base
 FROM base AS builder
 
 ARG TARGETARCH
-ARG PLEXDRIVE_VERSION="5.2.1"
+ARG PLEXDRIVE_VER="5.2.1"
 
 ARG DEBIAN_FRONTEND="noninteractive"
-ARG OVERLAY_VERSION=v2.2.0.3
+ARG OVERLAY_VER=v2.2.0.3
 
 # build artifacts root
 RUN mkdir -p /bar
@@ -20,7 +20,7 @@ RUN \
 RUN \
   echo "**** add s6 overlay ****" && \
   OVERLAY_ARCH=$(if [ "$TARGETARCH" = "arm64" ]; then echo "aarch64"; elif [ "$TARGETARCH" = "arm" ]; then echo "armhf"; else echo "$TARGETARCH"; fi) && \
-  curl -o /tmp/s6-overlay.tar.gz -L "https://github.com/just-containers/s6-overlay/releases/download/${OVERLAY_VERSION}/s6-overlay-${OVERLAY_ARCH}.tar.gz" && \
+  curl -o /tmp/s6-overlay.tar.gz -L "https://github.com/just-containers/s6-overlay/releases/download/${OVERLAY_VER}/s6-overlay-${OVERLAY_ARCH}.tar.gz" && \
   tar xzf /tmp/s6-overlay.tar.gz -C /bar/ --exclude='./bin' && \
   tar xzf /tmp/s6-overlay.tar.gz -C /bar/usr ./bin
 
@@ -28,7 +28,7 @@ RUN \
   echo "**** add plexdrive ****" && \
   mkdir -p /bar/usr/local/bin && \
   PLEXDRIVE_ARCH=$(if [ "$TARGETARCH" = "arm" ]; then echo "arm7"; else echo "$TARGETARCH"; fi) && \
-  curl -o /bar/usr/local/bin/plexdrive -LJ https://github.com/plexdrive/plexdrive/releases/download/${PLEXDRIVE_VERSION}/plexdrive-linux-${PLEXDRIVE_ARCH}
+  curl -o /bar/usr/local/bin/plexdrive -LJ https://github.com/plexdrive/plexdrive/releases/download/${PLEXDRIVE_VER}/plexdrive-linux-${PLEXDRIVE_ARCH}
 
 # add local files
 COPY root/ /bar/
