@@ -3,14 +3,14 @@
 
 echo "*** checking config"
 while [ ! -f "/config/config.json" ] || [ ! -f "/config/token.json" ]; do
-	echo "Waiting for config files in /config. Retrying in 30s ..."
-	echo "RUN: docker exec -it <CONTAINER_NAME> plexdrive_setup"
-	sleep 30
+    echo "Waiting for config files in /config. Retrying in 30s ..."
+    echo "RUN: docker exec -it <CONTAINER_NAME> plexdrive_setup"
+    sleep 30
 done
 
 echo "*** checking mountpoint: ${pd_mountpoint}"
 while findmnt "${pd_mountpoint}" | grep -q fuse; do
-	echo "ERROR: mountpoint (${pd_mountpoint}) already mounted"
+    echo "ERROR: mountpoint (${pd_mountpoint}) already mounted"
     fusermount -uz "${pd_mountpoint}"
     echo "Retrying in 15s ..."
     sleep 15
