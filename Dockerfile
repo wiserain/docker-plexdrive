@@ -1,14 +1,19 @@
-FROM ubuntu:20.04 AS base
-FROM base AS builder
+ARG UBUNTU_VER=20.04
+
+FROM ubuntu:${UBUNTU_VER} AS ubuntu
+FROM ghcr.io/by275/prebuilt:ubuntu${UBUNTU_VER} AS prebuilt
+
+# 
+# BUILD
+# 
+FROM ubuntu AS builder
 
 ARG TARGETARCH
 ARG PLEXDRIVE_VER="5.2.1"
-
 ARG DEBIAN_FRONTEND="noninteractive"
-ARG OVERLAY_VER=v2.2.0.3
 
 # build artifacts root
-RUN mkdir -p /bar
+RUN mkdir -p /bar/usr/local/bin
 
 RUN \
   echo "**** install build packages ****" && \
@@ -17,16 +22,11 @@ RUN \
     ca-certificates \
     curl
 
-RUN \
-  echo "**** add s6 overlay ****" && \
-  OVERLAY_ARCH=$(if [ "$TARGETARCH" = "arm64" ]; then echo "aarch64"; elif [ "$TARGETARCH" = "arm" ]; then echo "armhf"; else echo "$TARGETARCH"; fi) && \
-  curl -o /tmp/s6-overlay.tar.gz -L "https://github.com/just-containers/s6-overlay/releases/download/${OVERLAY_VER}/s6-overlay-${OVERLAY_ARCH}.tar.gz" && \
-  tar xzf /tmp/s6-overlay.tar.gz -C /bar/ --exclude='./bin' && \
-  tar xzf /tmp/s6-overlay.tar.gz -C /bar/usr ./bin
+# add s6 overlay
+COPY --from=prebuilt /s6/ /bar/
 
 RUN \
   echo "**** add plexdrive ****" && \
-  mkdir -p /bar/usr/local/bin && \
   PLEXDRIVE_ARCH=$(if [ "$TARGETARCH" = "arm" ]; then echo "arm7"; else echo "$TARGETARCH"; fi) && \
   curl -o /bar/usr/local/bin/plexdrive -LJ https://github.com/plexdrive/plexdrive/releases/download/${PLEXDRIVE_VER}/plexdrive-linux-${PLEXDRIVE_ARCH}
 
@@ -39,7 +39,7 @@ ADD https://raw.githubusercontent.com/by275/docker-scripts/master/root/etc/cont-
 # 
 # release
 # 
-FROM base
+FROM ubuntu
 LABEL maintainer="wiserain"
 LABEL org.opencontainers.image.source https://github.com/wiserain/docker-plexdrive
 
