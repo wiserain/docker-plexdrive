@@ -1,8 +1,7 @@
 name: buildx
 
 on:
-  watch:
-    types: [started]
+  workflow_dispatch:
   push:
     branches:
       - 'master'
@@ -15,7 +14,7 @@ env:
 jobs:
   buildx:
     runs-on: ubuntu-20.04
-    if: github.event_name != 'pull_request' && (github.event_name != 'watch' || github.actor == github.event.repository.owner.login)
+    if: github.event_name != 'pull_request'
     steps:
       -
         name: Checkout
@@ -109,7 +108,7 @@ jobs:
 
   buildx-on-pr:
     runs-on: ubuntu-20.04
-    if: github.event_name == 'pull_request' && (github.event_name != 'watch' || github.actor == github.event.repository.owner.login)
+    if: github.event_name == 'pull_request'
     steps:
       -
         name: Checkout
@@ -160,7 +159,7 @@ jobs:
       -
         name: Notification
         uses: sarisia/actions-status-discord@v1
-        if: always()
+        if: always() && github.actor == github.event.repository.owner.login
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
           status: ${{ job.status }}
