@@ -1,9 +1,7 @@
 #!/usr/bin/with-contenv bash
 . /usr/local/bin/variables
 
-IFS=" " read -r -a pd_user_opts <<< "$PLEXDRIVE_OPTS"
-
-mount_command="plexdrive mount ${pd_mountpoint} $(echo $pd_basic_opts) ${pd_user_opts[@]}"
+mount_command="plexdrive mount ${pd_mountpoint} $(echo $pd_basic_opts) $PLEXDRIVE_OPTS"
 echo "*** mounting => $mount_command"
 exec s6-notifyoncheck -d -n 0 -s 3000 \
     s6-setuidgid abc $mount_command

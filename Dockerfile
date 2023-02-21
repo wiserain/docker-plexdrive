@@ -1,54 +1,77 @@
 ARG UBUNTU_VER=20.04
 
-FROM ubuntu:${UBUNTU_VER} AS ubuntu
-FROM ghcr.io/by275/base:ubuntu${UBUNTU_VER} AS prebuilt
+FROM ghcr.io/by275/base:ubuntu AS prebuilt
+FROM ghcr.io/by275/base:ubuntu${UBUNTU_VER} AS base
 
 # 
 # BUILD
 # 
-FROM ubuntu AS builder
+FROM base AS plexdrive
 
 ARG TARGETARCH
 ARG PLEXDRIVE_VER="5.2.1"
 ARG DEBIAN_FRONTEND="noninteractive"
 
-# build artifacts root
-RUN mkdir -p /bar/usr/local/bin
-
-RUN \
-    echo "**** install build packages ****" && \
-    apt-get update && \
-    apt-get install -yq --no-install-recommends \
-        ca-certificates \
-        curl
-
-# add s6 overlay
-COPY --from=prebuilt /s6/ /bar/
-
 RUN \
     echo "**** add plexdrive ****" && \
     PLEXDRIVE_ARCH=$(if [ "$TARGETARCH" = "arm" ]; then echo "arm7"; else echo "$TARGETARCH"; fi) && \
-    curl -o /bar/usr/local/bin/plexdrive -LJ https://github.com/plexdrive/plexdrive/releases/download/${PLEXDRIVE_VER}/plexdrive-linux-${PLEXDRIVE_ARCH}
+    curl -o /tmp/plexdrive -LJ https://github.com/plexdrive/plexdrive/releases/download/${PLEXDRIVE_VER}/plexdrive-linux-${PLEXDRIVE_ARCH}
 
-# add local files
-COPY root/ /bar/
+# 
+# COLLECT
+# 
+FROM base AS collector
 
+# add s6 overlay
+COPY --from=prebuilt /s6/ /bar/
 ADD https://raw.githubusercontent.com/by275/docker-base/main/_/etc/cont-init.d/adduser /bar/etc/cont-init.d/10-adduser
 ADD https://raw.githubusercontent.com/by275/docker-base/main/_/etc/cont-init.d/install-pkg /bar/etc/cont-init.d/20-install-pkg
 ADD https://raw.githubusercontent.com/by275/docker-base/main/_/etc/cont-init.d/wait-for-mnt /bar/etc/cont-init.d/30-wait-for-mnt
 
+# add plexdrive
+COPY --from=plexdrive /tmp/plexdrive /bar/usr/local/bin/
+
+# add local files
+COPY root/ /bar/
+
+RUN \
+    echo "**** directories ****" && \
+    mkdir -p \
+        /bar/cache \
+        /bar/cloud \
+        /bar/data \
+        /bar/local \
+        && \
+    echo "**** permissions ****" && \
+    chmod a+x \
+        /bar/usr/local/bin/* \
+        /bar/etc/cont-init.d/* \
+        /bar/etc/cont-finish.d/* \
+        /bar/etc/s6-overlay/s6-rc.d/*/run \
+        /bar/etc/s6-overlay/s6-rc.d/*/data/*
+
+RUN \
+    echo "**** s6: resolve dependencies ****" && \
+    for dir in /bar/etc/s6-overlay/s6-rc.d/*; do mkdir -p "$dir/dependencies.d"; done && \
+    for dir in /bar/etc/s6-overlay/s6-rc.d/*; do touch "$dir/dependencies.d/legacy-cont-init"; done && \
+    echo "**** s6: create a new bundled service ****" && \
+    mkdir -p /tmp/app/contents.d && \
+    for dir in /bar/etc/s6-overlay/s6-rc.d/*; do touch "/tmp/app/contents.d/$(basename "$dir")"; done && \
+    echo "bundle" > /tmp/app/type && \
+    mv /tmp/app /bar/etc/s6-overlay/s6-rc.d/app && \
+    echo "**** s6: deploy services ****" && \
+    rm /bar/package/admin/s6-overlay/etc/s6-rc/sources/top/contents.d/legacy-services && \
+    touch /bar/package/admin/s6-overlay/etc/s6-rc/sources/top/contents.d/app
+
 # 
-# release
+# RELEASE
 # 
-FROM ubuntu
+FROM base
 LABEL maintainer="wiserain"
 LABEL org.opencontainers.image.source https://github.com/wiserain/docker-plexdrive
 
 ARG DEBIAN_FRONTEND="noninteractive"
 ARG APT_MIRROR="archive.ubuntu.com"
-
-# add build artifacts
-COPY --from=builder /bar/ /
 
 # install packages
 RUN \
@@ -56,30 +79,26 @@ RUN \
     sed -i "s/archive.ubuntu.com/$APT_MIRROR/g" /etc/apt/sources.list && \
     echo "**** install runtime packages ****" && \
     apt-get update && \
-    apt-get install -yqq --no-install-recommends apt-utils && \
     apt-get install -yqq --no-install-recommends \
-        ca-certificates \
         fuse \
         openssl \
-        tzdata \
         unionfs-fuse \
-        wget && \
-    update-ca-certificates && \
+        && \
     sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf && \
     echo "**** add mergerfs ****" && \
-    MFS_VERSION=$(wget --no-check-certificate -O - -o /dev/null "https://api.github.com/repos/trapexit/mergerfs/releases/latest" | awk '/tag_name/{print $4;exit}' FS='[""]') && \
+    MFS_VERSION=$(curl -fsL "https://api.github.com/repos/trapexit/mergerfs/releases/latest" | awk '/tag_name/{print $4;exit}' FS='[""]') && \
     MFS_DEB="mergerfs_${MFS_VERSION}.ubuntu-focal_$(dpkg --print-architecture).deb" && \
-    cd $(mktemp -d) && wget --no-check-certificate "https://github.com/trapexit/mergerfs/releases/download/${MFS_VERSION}/${MFS_DEB}" && \
+    cd $(mktemp -d) && curl -LJO "https://github.com/trapexit/mergerfs/releases/download/${MFS_VERSION}/${MFS_DEB}" && \
     dpkg -i ${MFS_DEB} && \
-    echo "**** create abc user ****" && \
-    useradd -u 911 -U -d /config -s /bin/false abc && \
-    usermod -G users abc && \
-    echo "**** permissions ****" && \
-    chmod a+x /usr/local/bin/* && \
     echo "**** cleanup ****" && \
-    apt-get clean autoclean && \
-    apt-get autoremove -y && \
-    rm -rf /tmp/* /var/lib/{apt,dpkg,cache,log}/
+    rm -rf \
+        /tmp/* \
+        /var/tmp/* \
+        /var/cache/* \
+        /var/lib/apt/lists/*
+
+# add build artifacts
+COPY --from=collector /bar/ /
 
 # environment settings
 ENV \
@@ -93,7 +112,6 @@ ENV \
     MFS_USER_OPTS="rw,use_ino,func.getattr=newest,category.action=all,category.create=ff,cache.files=auto-full,dropcacheonclose=true"
 
 VOLUME /config /cache /cloud /data /local
-WORKDIR /data
 
 HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=3 \
     CMD /usr/local/bin/healthcheck
